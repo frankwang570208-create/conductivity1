@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="導電性實驗">
+<meta name="theme-color" content="#141516">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>水溶液導電性實驗</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;background:#1e1f21;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif;color:#eee;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  #app{display:flex;flex-direction:column;height:100%;height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}
+  button{touch-action:manipulation}
+  #rotate{position:fixed;inset:0;background:rgba(10,10,12,.94);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:50;text-align:center;padding:24px}
+  #rotate .ph{width:90px;height:140px;border:6px solid #f4c46a;border-radius:16px;animation:turn 2s ease-in-out infinite}
+  @keyframes turn{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+  #rotate p{font-size:22px;margin:0}
+  @media (orientation:portrait) and (max-width:1100px){#rotate.show{display:flex}}
+  header{display:flex;align-items:center;gap:14px;padding:10px 18px;background:#141516;border-bottom:1px solid #333;flex-wrap:wrap}
+  h1{font-size:20px;font-weight:700;margin:0;letter-spacing:1px}
+  .tag{font-size:13px;padding:3px 10px;border-radius:12px;background:#3b3320;color:#f4c46a}
+  #status{flex:1;min-width:240px;font-size:17px;padding:8px 14px;border-radius:10px;background:#26282b;transition:background .3s,color .3s}
+  #status.ok{background:#1f3d22;color:#9fe29a}
+  #status.weak{background:#2f3a1c;color:#d8e88a}
+  #status.warn{background:#4a1d1d;color:#ffb0a8}
+  #status.info{background:#3a3220;color:#f6d38c}
+  button{font-family:inherit;font-size:16px;padding:10px 18px;border-radius:10px;border:1px solid #555;background:#2d2f33;color:#eee;cursor:pointer}
+  button:active{transform:scale(.97)}
+  #stage{flex:1;min-height:0;touch-action:none;position:relative}
+  svg{width:100%;height:100%;display:block;touch-action:none}
+  .clip,.bottle{cursor:grab}
+  .lbl{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif;font-weight:500;fill:#e9e6dc;font-size:20px}
+  .lbl-s{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC","Noto Sans CJK TC",sans-serif;fill:#b9b6ac;font-size:16px}
+  .halo,.ledOn{transition:opacity .35s}
+  .ring{transition:opacity .15s}
+  #bubbles{transition:opacity .5s}
+  .bub{animation:rise 1.8s linear infinite}
+  @keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:.9}100%{transform:translateY(-150px);opacity:0}}
+  #quiz{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:#17181a;border:2px solid #f4c46a;border-radius:16px;padding:14px 20px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);display:none;text-align:center;min-width:min(460px,92%)}
+  #quiz.open{display:block}
+  #quizQ{font-size:19px;font-weight:700;margin-bottom:12px}
+  .qbtns{display:flex;gap:14px;justify-content:center}
+  .qb{font-size:22px;font-weight:700;padding:14px 26px;border-radius:14px;min-width:110px;border:2px solid #666}
+  .qb1{background:#3d1a16;border-color:#ff6b55;color:#ffd0c8}.qb2{background:#3a2f18;border-color:#e0b04a;color:#ffe6a8}.qb3{background:#26282b;border-color:#777;color:#ddd}
+  .qb:disabled{opacity:.3;text-decoration:line-through}
+  .qb.shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  #quizFb{min-height:24px;margin-top:10px;font-size:17px}
+  #quizFb.no{color:#ffb0a8}#quizFb.yes{color:#9fe29a}
+  #panel{position:absolute;top:12px;right:12px;width:min(520px,92%);max-height:calc(100% - 24px);overflow:auto;background:#17181a;border:1px solid #444;border-radius:14px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.6);display:none}
+  #panel.open{display:block}
+  #panel h2{font-size:18px;margin:0 0 10px;font-weight:700}
+  #panel table{width:100%;border-collapse:collapse;font-size:16px}
+  #panel th,#panel td{padding:9px 8px;border-bottom:1px solid #333;text-align:left}
+  #panel th{color:#aaa;font-weight:500;font-size:14px}
+  #panel .empty{color:#888;font-size:15px;padding:10px 0}
+  .pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:14px}
+  .p-strong{background:#1f3d22;color:#9fe29a}.p-weak{background:#3a3a1c;color:#e3e28a}.p-none{background:#333;color:#bbb}
+  .p-acid{background:#4a2620;color:#ffb39a}.p-base{background:#1d2f4a;color:#9cc4ff}.p-neu{background:#2e2e2e;color:#ccc}
+</style>
+</head>
+<body>
+<div id="rotate" class="show"><div class="ph"></div><p>請把平板橫放，操作空間比較大</p><button id="rotOk">直接使用</button></div>
+<div id="app">
+  <header>
+    <h1>水溶液導電性實驗</h1>
+    <span class="tag">國中自然・電解質</span>
+    <div id="status">拖曳鱷魚夾，把電池、LED 和燒杯接成通路</div>
+    <button id="recBtn">實驗紀錄 (0)</button>
+    <button id="reset">重新排線</button>
+    <button id="fsBtn">全螢幕</button>
+  </header>
+  <div id="stage">
+<svg id="svg" viewBox="0 0 1200 880" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="table" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#47494b"/><stop offset="1" stop-color="#2b2c2e"/></linearGradient>
+    <pattern id="grain" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#ffffff" opacity=".035"/><circle cx="4" cy="4" r=".6" fill="#000" opacity=".08"/></pattern>
+    <radialGradient id="vign" cx=".5" cy=".45" r=".75"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></radialGradient>
+    <linearGradient id="holder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3b3b"/><stop offset=".15" stop-color="#262626"/><stop offset="1" stop-color="#111"/></linearGradient>
+    <linearGradient id="cell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4d9e"/><stop offset=".22" stop-color="#5d93e8"/><stop offset=".45" stop-color="#2a63c4"/><stop offset="1" stop-color="#0f2a5c"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d9196"/><stop offset=".3" stop-color="#f4f6f8"/><stop offset=".6" stop-color="#b4b8bd"/><stop offset="1" stop-color="#5b5f64"/></linearGradient>
+    <linearGradient id="metalH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7d8186"/><stop offset=".35" stop-color="#f2f4f6"/><stop offset=".65" stop-color="#b4b8bd"/><stop offset="1" stop-color="#55595e"/></linearGradient>
+    <linearGradient id="carbon" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1a1a1a"/><stop offset=".35" stop-color="#5a5a5c"/><stop offset=".6" stop-color="#2c2c2e"/><stop offset="1" stop-color="#0c0c0c"/></linearGradient>
+    <radialGradient id="capRed" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff8a80"/><stop offset=".45" stop-color="#e01b1b"/><stop offset="1" stop-color="#6d0000"/></radialGradient>
+    <radialGradient id="capBlack" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#8a8a8a"/><stop offset=".45" stop-color="#2a2a2a"/><stop offset="1" stop-color="#000"/></radialGradient>
+    <radialGradient id="capSilver" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#b9bdc2"/><stop offset="1" stop-color="#4d5156"/></radialGradient>
+    <linearGradient id="bootRed" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a72"/><stop offset=".25" stop-color="#f22a22"/><stop offset=".7" stop-color="#c00d0d"/><stop offset="1" stop-color="#6e0000"/></linearGradient>
+    <linearGradient id="bootBlack" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a7a7a"/><stop offset=".25" stop-color="#2e2e2e"/><stop offset=".7" stop-color="#141414"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <linearGradient id="board" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9e5da"/><stop offset="1" stop-color="#b9b3a3"/></linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a87a4d"/><stop offset=".4" stop-color="#8a5f37"/><stop offset="1" stop-color="#5a3b20"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".12" stop-color="#fff" stop-opacity=".05"/><stop offset=".8" stop-color="#fff" stop-opacity=".03"/><stop offset=".92" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity=".06"/></linearGradient>
+    <linearGradient id="lidG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8f4ff" stop-opacity=".55"/><stop offset="1" stop-color="#9fb8cc" stop-opacity=".35"/></linearGradient>
+    <radialGradient id="domeOff" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ffd2cc" stop-opacity=".95"/><stop offset=".35" stop-color="#d9433a" stop-opacity=".75"/><stop offset="1" stop-color="#7a1010" stop-opacity=".9"/></radialGradient>
+    <radialGradient id="domeOn" cx=".45" cy=".4" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#ffb3a6"/><stop offset=".7" stop-color="#ff3b2b"/><stop offset="1" stop-color="#c40f0f"/></radialGradient>
+    <radialGradient id="haloG" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff5a45" stop-opacity=".85"/><stop offset=".4" stop-color="#ff3a2a" stop-opacity=".35"/><stop offset="1" stop-color="#ff2a1a" stop-opacity="0"/></radialGradient>
+    <clipPath id="beakerClip"><path d="M846 250 V522 Q846 536 860 536 H1040 Q1054 536 1054 522 V250 Z"/></clipPath>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".55"/></filter>
+    <filter id="shadowS" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".6"/></filter>
+  </defs>
+
+  <rect width="1200" height="880" fill="url(#table)"/>
+  <rect width="1200" height="880" fill="url(#grain)"/>
+  <rect width="1200" height="880" fill="url(#vign)"/>
+
+  <!-- 電池盒 -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="300" width="380" height="150" rx="16" fill="url(#holder)" stroke="#000" stroke-width="2"/>
+    <rect x="96" y="322" width="348" height="106" rx="10" fill="#0b0b0b"/>
+    <rect x="112" y="342" width="148" height="66" rx="10" fill="url(#cell)"/>
+    <rect x="112" y="342" width="26" height="66" rx="8" fill="url(#metal)"/>
+    <rect x="260" y="361" width="12" height="28" rx="3" fill="url(#metal)"/>
+    <text x="196" y="383" text-anchor="middle" font-size="20" font-weight="700" fill="#fff" font-family="Noto Sans TC">1.5V</text>
+    <text x="250" y="383" text-anchor="middle" font-size="22" font-weight="700" fill="#fff">+</text>
+    <rect x="282" y="342" width="148" height="66" rx="10" fill="url(#cell)"/>
+    <rect x="282" y="342" width="26" height="66" rx="8" fill="url(#metal)"/>
+    <rect x="430" y="361" width="12" height="28" rx="3" fill="url(#metal)"/>
+    <text x="366" y="383" text-anchor="middle" font-size="20" font-weight="700" fill="#fff" font-family="Noto Sans TC">1.5V</text>
+    <text x="420" y="383" text-anchor="middle" font-size="22" font-weight="700" fill="#fff">+</text>
+    <rect x="122" y="268" width="16" height="36" fill="url(#metalH)"/>
+    <rect x="402" y="268" width="16" height="36" fill="url(#metalH)"/>
+  </g>
+  <circle cx="130" cy="268" r="17" fill="url(#capBlack)" stroke="#000"/>
+  <circle cx="410" cy="268" r="17" fill="url(#capRed)" stroke="#400"/>
+  <text class="lbl" x="100" y="275" text-anchor="end">負極 −</text>
+  <text class="lbl" x="440" y="275">正極 +</text>
+  <text class="lbl-s" x="270" y="478" text-anchor="middle">電池盒（2 顆串聯・3V）</text>
+
+  <!-- LED -->
+  <circle id="halo" class="halo" cx="640" cy="150" r="130" fill="url(#haloG)" opacity="0"/>
+  <g filter="url(#shadow)"><rect x="555" y="300" width="170" height="62" rx="10" fill="url(#board)" stroke="#8e8878"/></g>
+  <path d="M622 222 V268 Q622 280 605 290 V318" fill="none" stroke="url(#metalH)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M658 222 V300 Q658 306 675 312 V318" fill="none" stroke="url(#metalH)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M604 222 V150 A36 36 0 0 1 676 150 V222 Z" fill="url(#domeOff)" stroke="#8a1a14" stroke-width="1.5"/>
+  <path id="domeOn" class="ledOn" d="M604 222 V150 A36 36 0 0 1 676 150 V222 Z" fill="url(#domeOn)" opacity="0"/>
+  <rect x="598" y="214" width="84" height="12" rx="3" fill="#c8302a" stroke="#7a1010"/>
+  <rect id="rimOn" class="ledOn" x="598" y="214" width="84" height="12" rx="3" fill="#ff5a48" opacity="0"/>
+  <path d="M616 140 Q618 122 634 116" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+  <rect x="632" y="168" width="16" height="14" fill="#5a1410" opacity=".55"/>
+  <circle cx="605" cy="331" r="15" fill="url(#capRed)" stroke="#400"/>
+  <circle cx="675" cy="331" r="15" fill="url(#capBlack)" stroke="#000"/>
+  <text class="lbl-s" x="605" y="392" text-anchor="middle">長腳 +</text>
+  <text class="lbl-s" x="675" y="392" text-anchor="middle">短腳 −</text>
+  <text class="lbl" x="640" y="428" text-anchor="middle">LED 燈</text>
+
+  <!-- 燒杯 -->
+  <g id="beaker">
+    <ellipse cx="950" cy="540" rx="120" ry="12" fill="#000" opacity=".35"/>
+    <g clip-path="url(#beakerClip)">
+      <rect x="840" y="250" width="220" height="290" fill="#cfe3f0" opacity=".06"/>
+      <rect id="liquid" x="840" y="536" width="220" height="0" fill="#d6ecff" opacity=".5"/>
+      <ellipse id="surface" cx="950" cy="536" rx="104" ry="6" fill="#fff" opacity="0"/>
+      <rect id="stream" x="946" y="195" width="8" height="0" rx="4" opacity="0"/>
+      <g id="bubbles" opacity="0"></g>
+    </g>
+    <rect x="892" y="222" width="16" height="280" rx="4" fill="url(#carbon)"/>
+    <rect x="992" y="222" width="16" height="280" rx="4" fill="url(#carbon)"/>
+    <path d="M846 246 V522 Q846 536 860 536 H1040 Q1054 536 1054 522 V246" fill="url(#glass)" stroke="#d9e7f0" stroke-opacity=".75" stroke-width="2.5"/>
+    <path d="M840 246 H1060" stroke="#d9e7f0" stroke-opacity=".8" stroke-width="3" stroke-linecap="round"/>
+    <g stroke="#e6f0f6" stroke-opacity=".5" stroke-width="1.5">
+      <path d="M1030 300 h18 M1036 340 h12 M1030 380 h18 M1036 420 h12 M1030 460 h18 M1036 500 h12"/>
+    </g>
+    <path d="M858 262 V510" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round"/>
+    <rect x="828" y="230" width="244" height="16" rx="4" fill="url(#lidG)" stroke="#cfe2f0" stroke-opacity=".7"/>
+    <path d="M930 196 H970 L956 226 V238 H944 V226 Z" fill="#dff0ff" fill-opacity=".35" stroke="#e6f3ff" stroke-opacity=".8" stroke-width="1.5"/>
+    <rect x="893" y="200" width="14" height="32" fill="url(#metalH)"/>
+    <rect x="993" y="200" width="14" height="32" fill="url(#metalH)"/>
+    <text x="900" y="290" text-anchor="middle" font-size="15" fill="#e9e6dc" font-family="Noto Sans TC">A</text>
+    <text x="1000" y="290" text-anchor="middle" font-size="15" fill="#e9e6dc" font-family="Noto Sans TC">B</text>
+  </g>
+  <circle cx="900" cy="200" r="15" fill="url(#capSilver)" stroke="#333"/>
+  <circle cx="1000" cy="200" r="15" fill="url(#capSilver)" stroke="#333"/>
+  <text class="lbl" x="950" y="580" text-anchor="middle" id="beakerLabel">燒杯：空的</text>
+  <text class="lbl-s" x="950" y="606" text-anchor="middle">碳棒電極 A・B</text>
+
+  <!-- 試劑架 -->
+  <rect x="40" y="740" width="1120" height="18" rx="4" fill="url(#wood)" filter="url(#shadow)"/>
+  <text id="shelfTip" x="600" y="754" text-anchor="middle" font-size="13" fill="#f6e8d2" font-family="Noto Sans TC">先把通路接好，才能倒入溶液</text>
+  <g id="bottles" style="transition:opacity .4s" opacity=".45"></g>
+
+  <!-- 導線盤 -->
+  <rect x="520" y="776" width="640" height="96" rx="16" fill="#000" opacity=".18"/>
+  <rect x="40" y="776" width="470" height="96" rx="16" fill="#000" opacity=".18"/>
+  <text class="lbl-s" x="56" y="800">鱷魚夾導線 × 3</text>
+
+  <g id="rings"></g>
+  <g id="wires"></g>
+  <g id="flying"></g>
+</svg>
+    <div id="quiz">
+      <div id="quizQ">預測 LED 會怎樣？</div>
+      <div class="qbtns">
+        <button data-a="很亮" class="qb qb1">很亮</button>
+        <button data-a="微亮" class="qb qb2">微亮</button>
+        <button data-a="不亮" class="qb qb3">不亮</button>
+      </div>
+      <div id="quizFb"></div>
+    </div>
+    <div id="panel">
+      <h2>實驗紀錄</h2>
+      <div id="recBody"></div>
+      <div style="text-align:right;margin-top:12px"><button id="clearRec">清除紀錄</button> <button id="closeRec">關閉</button></div>
+    </div>
+  </div>
+</div>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('svg');
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+function toSvg(evt){const p=svg.createSVGPoint();p.x=evt.clientX;p.y=evt.clientY;return p.matrixTransform(svg.getScreenCTM().inverse());}
+function tween(ms,fn){return new Promise(r=>{const t0=performance.now();const step=now=>{let t=Math.min(1,(now-t0)/ms);fn(t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2);if(t<1)requestAnimationFrame(step);else r();};requestAnimationFrame(step);});}
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+/* ---------- 溶液資料 ---------- */
+const SOLUTIONS=[
+  {name:'食鹽水',  level:1.0, ph:'中性', color:'#cfe6f2', op:.45},
+  {name:'小蘇打水',level:0.8, ph:'鹼性', color:'#e6eeea', op:.6},
+  {name:'肥皂水',  level:0.45,ph:'鹼性', color:'#f1eefa', op:.8},
+  {name:'醋',      level:0.35,ph:'酸性', color:'#e3bf73', op:.55},
+  {name:'檸檬汁',  level:0.4, ph:'酸性', color:'#efe05a', op:.65},
+  {name:'糖水',    level:0,   ph:'中性', color:'#f2ead2', op:.45},
+  {name:'酒精',    level:0,   ph:'中性', color:'#e4eefc', op:.35},
+  {name:'純水',    level:0,   ph:'中性', color:'#cfe5fb', op:.35}
+];
+let current=null, busy=false, answered=false, attempts=0;
+const wrong=new Set();
+const LIQ_TOP=356, LIQ_BOTTOM=536;
+
+/* ---------- 接點 ---------- */
+const terminals=[
+  {id:'B-',x:130,y:268,ang:70},{id:'B+',x:410,y:268,ang:110},
+  {id:'L+',x:605,y:331,ang:70},{id:'L-',x:675,y:331,ang:110},
+  {id:'E1',x:900,y:200,ang:70},{id:'E2',x:1000,y:200,ang:110}
+];
+const SNAP=62, CLIP_LEN=125;
+const ringLayer=document.getElementById('rings');
+terminals.forEach(t=>{t.ring=el('circle',{cx:t.x,cy:t.y,r:30,fill:'none',stroke:'#ffe27a','stroke-width':4,opacity:0,class:'ring'},ringLayer);});
+
+/* ---------- 試劑瓶 ---------- */
+const bottleLayer=document.getElementById('bottles');
+const bottles=SOLUTIONS.map((s,i)=>{
+  const home={x:110+i*140,y:740};
+  const g=el('g',{class:'bottle',filter:'url(#shadowS)'},bottleLayer);
+  const liqH=s.op>.6?78:74;
+  el('path',{d:'M-34 -6 V-80 Q-34 -92 -16 -98 V-112 H16 V-98 Q34 -92 34 -80 V-6 Q34 0 28 0 H-28 Q-34 0 -34 -6 Z',fill:'#dceaf2','fill-opacity':.18,stroke:'#e8f2f8','stroke-opacity':.8,'stroke-width':2},g);
+  el('path',{d:`M-31 -6 V-${liqH} H31 V-6 Q31 -3 27 -3 H-27 Q-31 -3 -31 -6 Z`,fill:s.color,opacity:Math.min(.95,s.op+.2)},g);
+  el('rect',{x:-19,y:-128,width:38,height:20,rx:4,fill:s.ph==='酸性'?'#b5452f':s.ph==='鹼性'?'#2f5fa8':'#4a4d52',stroke:'#111','stroke-opacity':.5},g);
+  el('rect',{x:-30,y:-66,width:60,height:40,rx:3,fill:'#fbfaf5',stroke:'#c9c5b8'},g);
+  const t=el('text',{x:0,y:s.name.length>3?-41:-40,'text-anchor':'middle','font-size':s.name.length>3?13:16,'font-weight':700,fill:'#2a2a2a','font-family':'Noto Sans TC'},g);t.textContent=s.name;
+  el('line',{x1:-22,y1:-33,x2:22,y2:-33,stroke:'#b9b4a5','stroke-width':1},g);
+  el('path',{d:'M-26 -84 V-12',stroke:'#fff','stroke-opacity':.45,'stroke-width':4,'stroke-linecap':'round'},g);
+  el('rect',{x:-40,y:-135,width:80,height:140,fill:'transparent'},g);
+  const b={s,home,g,x:home.x,y:home.y,a:0};
+  place(b);
+  attachBottle(b);
+  return b;
+});
+function place(b){b.g.setAttribute('transform',`translate(${b.x},${b.y}) rotate(${b.a})`);}
+function overBeaker(x,y){return x>800&&x<1100&&y>150&&y<600;}
+let bdrag=null, circuitReady=false;
+async function lockedShake(b){
+  const st=document.getElementById('status');
+  st.textContent='請先用導線把電池、LED 和燒杯接成通路，再倒入溶液';st.className='warn';
+  await tween(360,t=>{b.a=Math.sin(t*Math.PI*4)*8;place(b);});b.a=0;place(b);
+}
+function emptyBeaker(){
+  current=null;answered=false;attempts=0;wrong.clear();
+  setLevel(LIQ_BOTTOM);
+  document.getElementById('beakerLabel').textContent='燒杯：空的';
+}
+function attachBottle(b){
+  b.g.addEventListener('pointerdown',e=>{
+    if(busy||bdrag||drag)return;e.preventDefault();
+    if(!circuitReady){lockedShake(b);return;}
+    const p=toSvg(e);bdrag={b,id:e.pointerId,px:p.x,py:p.y,ox:b.x-p.x,oy:b.y-p.y,moved:false};
+    document.getElementById('flying').appendChild(b.g);
+  });
+}
+window.addEventListener('pointermove',e=>{
+  if(!bdrag||e.pointerId!==bdrag.id)return;const p=toSvg(e),b=bdrag.b;
+  if(Math.hypot(p.x-bdrag.px,p.y-bdrag.py)>10)bdrag.moved=true;
+  if(bdrag.moved){b.x=p.x+bdrag.ox;b.y=p.y+bdrag.oy;place(b);}
+});
+function bottleUp(e){
+  if(!bdrag||e.pointerId!==bdrag.id)return;const {b,moved}=bdrag;bdrag=null;
+  if(!moved||overBeaker(b.x,b.y-60))pour(b);else goHome(b);
+}
+window.addEventListener('pointerup',bottleUp);window.addEventListener('pointercancel',bottleUp);
+async function goHome(b){
+  const sx=b.x,sy=b.y,sa=b.a;
+  await tween(380,t=>{b.x=lerp(sx,b.home.x,t);b.y=lerp(sy,b.home.y,t);b.a=lerp(sa,0,t);place(b);});
+  bottleLayer.appendChild(b.g);
+}
+const liquid=document.getElementById('liquid'),surface=document.getElementById('surface'),stream=document.getElementById('stream');
+function setLevel(y){liquid.setAttribute('y',y);liquid.setAttribute('height',LIQ_BOTTOM-y);surface.setAttribute('cy',y);surface.setAttribute('opacity',y<LIQ_BOTTOM-4?.25:0);}
+async function pour(b){
+  busy=true;
+  const s=b.s;
+  // 先清洗燒杯
+  if(current){
+    const y0=+liquid.getAttribute('y');
+    document.getElementById('beakerLabel').textContent='清洗燒杯中…';
+    current=null;evaluate();
+    await tween(450,t=>setLevel(lerp(y0,LIQ_BOTTOM,t)));
+  }
+  // 移到倒的位置：瓶口對準漏斗
+  const A=-115, rad=A*Math.PI/180, mx=0, my=-118;
+  const ox=950-(mx*Math.cos(rad)-my*Math.sin(rad)), oy=188-(mx*Math.sin(rad)+my*Math.cos(rad));
+  const sx=b.x,sy=b.y,sa=b.a;
+  await tween(520,t=>{b.x=lerp(sx,ox,t);b.y=lerp(sy,oy-40*(1-t)*t*4,t);b.a=lerp(sa,A,t);place(b);});
+  // 倒入
+  liquid.setAttribute('fill',s.color);liquid.setAttribute('opacity',s.op);
+  stream.setAttribute('fill',s.color);stream.setAttribute('opacity',Math.min(1,s.op+.3));
+  await tween(900,t=>{
+    const y=lerp(LIQ_BOTTOM,LIQ_TOP,t);setLevel(y);
+    stream.setAttribute('height',Math.max(0,y-195));
+  });
+  stream.setAttribute('opacity',0);stream.setAttribute('height',0);
+  current=s;answered=false;attempts=0;wrong.clear();
+  document.getElementById('beakerLabel').textContent='燒杯：'+s.name;
+  busy=false;
+  evaluate();
+  goHome(b);
+}
+
+/* ---------- 氣泡 ---------- */
+const bubG=document.getElementById('bubbles');
+[900,1000].forEach(cx=>{for(let i=0;i<7;i++){el('circle',{class:'bub',cx:cx+(Math.random()*16-8)+(i%2?10:-10),cy:500-Math.random()*20,r:2+Math.random()*2.5,fill:'none',stroke:'#fff','stroke-width':1.2,style:`animation-delay:${(i*0.26).toFixed(2)}s;animation-duration:${(1.5+Math.random()).toFixed(2)}s`},bubG);}});
+
+/* ---------- 導線 ---------- */
+const wireDefs=[
+  {color:'red',  stroke:'#d81b1b',dark:'#6a0505',boot:'bootRed'},
+  {color:'black',stroke:'#1b1b1b',dark:'#000',boot:'bootBlack'},
+  {color:'red',  stroke:'#d81b1b',dark:'#6a0505',boot:'bootRed'}
+];
+function initialEnds(i){
+  const xs=[90,560,860][i];
+  return [{x:xs+190,y:808,ang:0,snap:null},{x:xs+290,y:848,ang:0,snap:null}];
+}
+let wires=[];
+function buildClip(parent,def){
+  const g=el('g',{class:'clip'},parent);
+  const inner=el('g',{filter:'url(#shadowS)'},g);
+  el('path',{d:'M-46 -11 L-6 -4 L0 -2 L-4 -1 L-46 -3 Z',fill:'url(#metal)',stroke:'#4a4d52','stroke-width':1},inner);
+  el('path',{d:'M-46 11 L-6 4 L0 2 L-4 1 L-46 3 Z',fill:'url(#metal)',stroke:'#4a4d52','stroke-width':1},inner);
+  el('path',{d:'M-34 -3 l3 3 l3 -3 l3 3 l3 -3 l3 3 l3 -3 l3 3 l3 -3 M-34 3 l3 -3 l3 3 l3 -3 l3 3 l3 -3 l3 3 l3 -3 l3 3',fill:'none',stroke:'#6b6f74','stroke-width':1},inner);
+  el('path',{d:'M-38 -15 C-52 -24 -78 -25 -100 -16 L-125 -7 L-125 7 L-100 16 C-78 25 -52 24 -38 15 C-34 8 -34 -8 -38 -15 Z',fill:'url(#'+def.boot+')',stroke:def.dark,'stroke-width':1},inner);
+  el('path',{d:'M-46 -13 C-60 -19 -80 -19 -98 -12',fill:'none',stroke:'#fff','stroke-width':3,'stroke-linecap':'round',opacity:.35},inner);
+  el('path',{d:'M-62 -4 C-70 -8 -80 -8 -88 -4',fill:'none',stroke:'#000','stroke-width':1.5,opacity:.35},inner);
+  el('rect',{x:-145,y:-34,width:160,height:68,rx:30,fill:'transparent'},g);
+  el('circle',{cx:0,cy:0,r:34,fill:'transparent'},g);
+  return g;
+}
+function build(){
+  if(busy)return;
+  emptyBeaker();
+  const layer=document.getElementById('wires');layer.innerHTML='';
+  wires=wireDefs.map((def,i)=>{
+    const w={def,ends:initialEnds(i)};
+    w.g=el('g',{},layer);
+    w.pOuter=el('path',{fill:'none',stroke:def.dark,'stroke-width':10,'stroke-linecap':'round'},w.g);
+    w.pInner=el('path',{fill:'none',stroke:def.stroke,'stroke-width':7,'stroke-linecap':'round'},w.g);
+    w.pHi=el('path',{fill:'none',stroke:'#fff','stroke-width':2,'stroke-linecap':'round',opacity:def.color==='black'?.18:.3,transform:'translate(0,-2)'},w.g);
+    w.pHit=el('path',{fill:'none',stroke:'transparent','stroke-width':36,'stroke-linecap':'round',style:'pointer-events:stroke;cursor:grab'},w.g);attachWireGrab(w.pHit,w);
+    w.clips=[0,1].map(j=>{const c=buildClip(w.g,def);attachDrag(c,w,j);return c;});
+    return w;
+  });
+  wires.forEach(update);evaluate();
+}
+const LED_BOX={x1:582,y1:92,x2:698,y2:300};
+const ROUTE_OFFS=[0,-80,-140,-200,-270,-340,90,170,250];
+function ledHits(x0,y0,x1,y1,x2,y2,x3,y3){
+  let n=0;
+  for(let i=0;i<=48;i++){
+    const t=i/48,u=1-t;
+    const x=u*u*u*x0+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x3,y=u*u*u*y0+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y3;
+    if(x>LED_BOX.x1&&x<LED_BOX.x2&&y>LED_BOX.y1&&y<LED_BOX.y2)n++;
+    if(y<6)n+=0.3;
+  }
+  return n;
+}
+function update(w){
+  const [a,b]=w.ends;
+  const geo=[a,b].map(e=>{const r=e.ang*Math.PI/180,ux=Math.cos(r),uy=Math.sin(r);return {ux,uy,ax:e.x-ux*CLIP_LEN,ay:e.y-uy*CLIP_LEN};});
+  const dist=Math.hypot(geo[0].ax-geo[1].ax,geo[0].ay-geo[1].ay);
+  const k=Math.min(130,dist*0.3)+60, sag=25+Math.min(90,dist*0.15);
+  const g0=geo[0],g1=geo[1];
+  let best=null;
+  for(const off of ROUTE_OFFS){
+    const c1x=g0.ax-g0.ux*k,c1y=g0.ay-g0.uy*k+sag+off,c2x=g1.ax-g1.ux*k,c2y=g1.ay-g1.uy*k+sag+off;
+    const hit=ledHits(g0.ax,g0.ay,c1x,c1y,c2x,c2y,g1.ax,g1.ay);
+    if(!best||hit<best.hit){best={hit,c1x,c1y,c2x,c2y};}
+    if(hit===0)break;
+  }
+  const d=`M${g0.ax},${g0.ay} C${best.c1x},${best.c1y} ${best.c2x},${best.c2y} ${g1.ax},${g1.ay}`;
+  w.pOuter.setAttribute('d',d);w.pInner.setAttribute('d',d);w.pHi.setAttribute('d',d);w.pHit.setAttribute('d',d);
+  w.clips.forEach((c,j)=>c.setAttribute('transform',`translate(${w.ends[j].x},${w.ends[j].y}) rotate(${w.ends[j].ang})`));
+}
+function flash(t){t.ring.setAttribute('stroke','#7dff8a');t.ring.setAttribute('opacity',1);setTimeout(()=>{t.ring.setAttribute('opacity',0);t.ring.setAttribute('stroke','#ffe27a');},450);}
+let drag=null;
+function startDrag(w,j,e){
+  if(drag)return;e.preventDefault();e.stopPropagation();
+  const p=toSvg(e);
+  drag={w,j,off:{x:w.ends[j].x-p.x,y:w.ends[j].y-p.y},ignore:w.ends[j].snap,id:e.pointerId};
+  w.ends[j].snap=null;w.g.parentNode.appendChild(w.g);evaluate();
+}
+function hitTerminal(tip,p,R){
+  let best=null,bd=1e9;
+  terminals.forEach(t=>{
+    if(t.id===drag.ignore)return;
+    const d=Math.hypot(t.x-p.x,t.y-p.y);
+    if(d<R&&d<bd){bd=d;best=t;}
+  });
+  return best;
+}
+function snapTo(w,j,t){const e2=w.ends[j];e2.x=t.x;e2.y=t.y;e2.snap=t.id;e2.ang=t.ang;update(w);flash(t);}
+window.addEventListener('pointermove',e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  const {w,j}=drag,p=toSvg(e),e2=w.ends[j],o=w.ends[1-j];
+  drag.off.x*=0.7;drag.off.y*=0.7;
+  e2.x=Math.max(10,Math.min(1190,p.x+drag.off.x));e2.y=Math.max(10,Math.min(870,p.y+drag.off.y));
+  if(drag.ignore){const t=terminals.find(t=>t.id===drag.ignore);if(Math.hypot(t.x-e2.x,t.y-e2.y)>SNAP+20&&Math.hypot(t.x-p.x,t.y-p.y)>SNAP+20)drag.ignore=null;}
+  if(Math.hypot(e2.x-o.x,e2.y-o.y)>20){const tgt=Math.atan2(e2.y-o.y,e2.x-o.x)*180/Math.PI;const dd=((tgt-e2.ang+540)%360)-180;e2.ang+=dd*0.15;}
+  const t=hitTerminal(e2,p,36);
+  if(t){snapTo(w,j,t);drag=null;evaluate();return;}
+  update(w);
+});
+function endDrag(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  const {w,j}=drag,e2=w.ends[j],p=toSvg(e);
+  const t=hitTerminal(e2,p,SNAP);
+  if(t)snapTo(w,j,t);
+  drag=null;update(w);evaluate();
+}
+window.addEventListener('pointerup',endDrag);window.addEventListener('pointercancel',endDrag);
+function attachDrag(c,w,j){c.addEventListener('pointerdown',e=>startDrag(w,j,e));}
+function attachWireGrab(path,w){
+  path.addEventListener('pointerdown',e=>{
+    const p=toSvg(e);
+    const d=w.ends.map(en=>{const r=en.ang*Math.PI/180;return Math.hypot(en.x-Math.cos(r)*CLIP_LEN-p.x,en.y-Math.sin(r)*CLIP_LEN-p.y);});
+    startDrag(w,d[0]<=d[1]?0:1,e);
+  });
+}
+
+/* ---------- 電路判斷 ---------- */
+const records={};
+function evaluate(){
+  const parent={};terminals.forEach(t=>parent[t.id]=t.id);
+  const find=x=>parent[x]===x?x:(parent[x]=find(parent[x]));
+  let clipped=0;
+  wires.forEach(w=>{w.ends.forEach(e=>{if(e.snap)clipped++;});if(w.ends[0].snap&&w.ends[1].snap)parent[find(w.ends[0].snap)]=find(w.ends[1].snap);});
+  const N=x=>find(x);
+  const edges=[{id:'led',a:N('L+'),b:N('L-')},{id:'sol',a:N('E1'),b:N('E2')}];
+  const paths=[];
+  (function dfs(node,used,path){
+    if(node===N('B-')&&path.length){paths.push(path.slice());return;}
+    edges.forEach(ed=>{
+      if(used.has(ed.id)||ed.a===ed.b)return;
+      let nxt=null,fwd=true;
+      if(ed.a===node)nxt=ed.b;else if(ed.b===node){nxt=ed.a;fwd=false;}
+      if(nxt===null)return;
+      used.add(ed.id);path.push({id:ed.id,fwd});dfs(nxt,used,path);path.pop();used.delete(ed.id);
+    });
+  })(N('B+'),new Set(),[]);
+  const has=(p,id,fwd)=>p.some(s=>s.id===id&&(fwd===undefined||s.fwd===fwd));
+  const pLedSol=paths.find(p=>has(p,'led',true)&&has(p,'sol'));
+  circuitReady=!!pLedSol&&N('B+')!==N('B-');
+  document.getElementById('bottles').setAttribute('opacity',circuitReady||busy?1:.45);
+  document.getElementById('shelfTip').textContent=circuitReady?'試劑瓶：點一下，或拖到燒杯上倒入':'先把通路接好，才能倒入溶液';
+  const pLed=paths.find(p=>has(p,'led',true)&&!has(p,'sol'));
+  const pRev=paths.find(p=>has(p,'led',false));
+  const pSol=paths.find(p=>!has(p,'led')&&has(p,'sol'));
+  let lit=0,msg,cls='',flow=false,quiz=false;
+  const redo=current&&!busy?'溶液已倒入，但':'';
+  if(N('B+')===N('B-')){msg='短路了！電池正、負極直接接在一起，請拆開重新組合';cls='warn';}
+  else if(pLed){lit=1;msg=(redo||'')+'電流沒有經過燒杯，請重新組合：讓電流流過水溶液';cls=current?'warn':'info';}
+  else if(pLedSol){
+    if(!current){msg=busy?'倒入中…':'通路接好了！現在可以點試劑瓶，把溶液倒進燒杯';cls='ok';}
+    else if(!answered){quiz=!busy;msg=`通路完成！先預測：燒杯裡是「${current.name}」，LED 會怎樣？`;cls='info';}
+    else{
+      lit=current.level;flow=lit>0;
+      if(lit>=0.6){msg=`LED 很亮：${current.name}容易導電`;cls='ok';}
+      else if(lit>0){msg=`LED 微亮：${current.name}可以導電，但導電性較弱`;cls='weak';}
+      else{msg=`LED 不亮：${current.name}不導電`;}
+      records[current.name]=Object.assign({},current,{attempts});renderRec();
+    }
+  }
+  else if(pRev){msg=redo+'LED 接反了，請重新組合：LED 長腳要接電池正極';cls=current?'warn':'info';}
+  else if(pSol){msg=redo+'電路中少了 LED，請重新組合';cls=current?'warn':'info';}
+  else if(current&&!busy){msg=`已倒入「${current.name}」，但還沒形成通路，請重新組合導線`;cls='warn';}
+  else if(clipped===0){msg='燒杯是空的。先拖曳鱷魚夾，把電池、LED 和燒杯接成通路';}
+  else{msg='還沒形成通路，檢查每個接點是否都夾好';}
+  showQuiz(quiz);
+  setLED(lit);
+  document.getElementById('bubbles').setAttribute('opacity',flow&&current?Math.min(1,.3+lit):0);
+  const s=document.getElementById('status');s.textContent=msg;s.className=cls;
+}
+function setLED(level){
+  const v=level>0?0.45+0.55*level:0;
+  document.getElementById('halo').setAttribute('opacity',level>0?0.3+0.7*level:0);
+  document.getElementById('halo').setAttribute('r',60+70*level);
+  document.getElementById('domeOn').setAttribute('opacity',v);
+  document.getElementById('rimOn').setAttribute('opacity',v);
+}
+
+/* ---------- 預測 ---------- */
+const quizEl=document.getElementById('quiz'),fb=document.getElementById('quizFb');
+let quizOpen=false;
+function showQuiz(on){
+  if(on&&!quizOpen){
+    document.getElementById('quizQ').textContent=`燒杯裡是「${current.name}」，預測 LED 會？`;
+    document.querySelectorAll('.qb').forEach(b=>{b.disabled=wrong.has(b.dataset.a);});
+    if(!wrong.size){fb.textContent='';fb.className='';}
+  }
+  quizOpen=on;quizEl.classList.toggle('open',on);
+}
+document.querySelectorAll('.qb').forEach(btn=>btn.addEventListener('click',()=>{
+  if(!current||answered)return;
+  attempts++;
+  const ans=current.level>=0.6?'很亮':current.level>0?'微亮':'不亮';
+  if(btn.dataset.a===ans){
+    fb.textContent='答對了！';fb.className='yes';
+    answered=true;
+    setTimeout(()=>{evaluate();},500);
+  }else{
+    wrong.add(btn.dataset.a);
+    btn.classList.remove('shake');void btn.offsetWidth;btn.classList.add('shake');
+    setTimeout(()=>{btn.disabled=true;},350);
+    fb.textContent='不對喔，請重新選擇';fb.className='no';
+  }
+}));
+
+/* ---------- 紀錄 ---------- */
+function renderRec(){
+  const list=SOLUTIONS.filter(s=>records[s.name]).map(s=>records[s.name]);
+  document.getElementById('recBtn').textContent=`實驗紀錄 (${list.length})`;
+  const body=document.getElementById('recBody');
+  if(!list.length){body.innerHTML='<div class="empty">還沒有紀錄。接好電路並倒入溶液後，結果會自動記在這裡。</div>';return;}
+  const phc={'酸性':'p-acid','鹼性':'p-base','中性':'p-neu'};
+  body.innerHTML='<table><tr><th>水溶液</th><th>酸鹼性</th><th>LED</th><th>導電性</th><th>預測</th></tr>'+list.map(s=>{
+    const led=s.level>=0.6?'很亮':s.level>0?'微亮':'不亮';
+    const c=s.level>=0.6?'p-strong':s.level>0?'p-weak':'p-none';
+    const cond=s.level>=0.6?'容易導電':s.level>0?'導電較弱':'不導電';
+    return `<tr><td>${s.name}</td><td><span class="pill ${phc[s.ph]}">${s.ph}</span></td><td><span class="pill ${c}">${led}</span></td><td>${cond}</td><td>${s.attempts===1?'一次答對':'第 '+s.attempts+' 次答對'}</td></tr>`;
+  }).join('')+'</table>';
+}
+document.getElementById('recBtn').addEventListener('click',()=>{renderRec();document.getElementById('panel').classList.toggle('open');});
+document.getElementById('closeRec').addEventListener('click',()=>document.getElementById('panel').classList.remove('open'));
+document.getElementById('clearRec').addEventListener('click',()=>{for(const k in records)delete records[k];renderRec();});
+document.getElementById('reset').addEventListener('click',build);
+build();renderRec();
+
+/* ---------- 平板設定 ---------- */
+['gesturestart','gesturechange'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.getElementById('rotOk').addEventListener('click',()=>document.getElementById('rotate').classList.remove('show'));
+const fsBtn=document.getElementById('fsBtn');
+const root=document.documentElement;
+const standalone=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
+if(standalone||!(root.requestFullscreen||root.webkitRequestFullscreen))fsBtn.style.display='none';
+fsBtn.addEventListener('click',()=>{
+  try{
+    if(document.fullscreenElement||document.webkitFullscreenElement){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}
+    else{const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);if(r&&r.catch)r.catch(()=>{});}
+  }catch(e){}
+});
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
